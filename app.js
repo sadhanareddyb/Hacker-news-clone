@@ -20,10 +20,11 @@ const postSchema = {
   content: String
 };
 const userSchema = new mongoose.Schema({
-  email: String,
-  password: String,
+  email: {type : String , unique: true},
+  password: {type : String},
   
 });
+ 
 
 const secret="Thisissecret";
 userSchema.plugin(encrypt,{secret:secret,encryptedFields:["password"]});
@@ -32,6 +33,7 @@ userSchema.plugin(encrypt,{secret:secret,encryptedFields:["password"]});
 const User = new mongoose.model("User", userSchema);
 
 const Post = mongoose.model("Post", postSchema);
+
 
 app.get("/", function(req, res){
 
@@ -44,7 +46,7 @@ app.get("/", function(req, res){
 });
 
 app.get("/compose", function(req, res){
-  res.render("compose");
+  res.render("register");
 });
 
 app.post("/compose", function(req, res){
@@ -86,11 +88,19 @@ app.post("/register", function(req, res){
     if(err){
       console.log(err);
     }else{
-      res.render("login");
+      res.render("compose");
     }
   
 });
 });
+app.get("/corona", function(req, res){
+  res.redirect("https://www.indiatoday.in/coronavirus");
+});
+app.get("/Livetv", function(req, res){
+  res.redirect("https://www.indiatoday.in/livetv");
+});
+
+
 app.get("/login", function(req, res){
   res.render("login");
 });
@@ -105,7 +115,7 @@ app.post("/login", function(req, res){
 User.findOne({email:username},function(err,foundUser){
 
   if (err) {
-    console.log('err');
+    return res.status(422).send({error:"please enter all fields"})
   } else {
     if(foundUser){
       if(foundUser.password===password){
@@ -116,6 +126,34 @@ User.findOne({email:username},function(err,foundUser){
 
 });
 });
+
+app.get("/edit/:id", (req, res) => {
+  const requestedId = req.params.id;
+  console.log(req.body);
+  Post.findOne({
+    _id: requestedId
+  }, (err, post) => {
+    if (!err) {
+      res.render("edit", {
+        title: post.title,
+        content: post.content
+      });
+    }
+  });
+});
+
+app.post("/delete", (req, res) => {
+  const deletePost = req.body.delete;
+
+  Post.findByIdAndDelete(deletePost, (err) => {
+    if (!err) {
+      res.redirect("/");
+    }
+  });
+});
+
+
+
 app.listen(3000, function() {
   console.log("Server started on port 3000");
 });
